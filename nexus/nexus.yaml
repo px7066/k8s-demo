@@ -1,0 +1,55 @@
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: nexus
+  name: nexus
+  namespace: other
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexus
+  template:
+    metadata:
+      labels:
+        app: nexus
+    spec:
+      containers:
+        - name: nexus
+          image: sonatype/nexus3
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          ports:
+          - containerPort: 8081
+            protocol: TCP
+            hostPort: 8081
+          volumeMounts:
+          - name: nexus-data
+            mountPath: nexus-data 
+      volumes:
+        - name: nexus-data
+          hostPath:
+            path: /mnt/sda1/external/nexus
+            type: DirectoryOrCreate
+
+---
+# service
+
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: nexus
+  name: nexus
+  namespace: other
+spec:
+  ports:
+    - port: 8081
+      targetPort: 8081
+  selector:
+    app: nexus
+  type: NodePort
