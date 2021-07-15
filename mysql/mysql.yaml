@@ -1,0 +1,66 @@
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: mysql
+  name: mysql
+  namespace: other
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:5.7.34
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "123456"
+          # securityContext:
+          #   privileged: true
+          ports:
+          - containerPort: 3306
+            protocol: TCP
+            hostPort: 3306
+          volumeMounts:
+          - name: mysql-data
+            mountPath: /var/lib/mysql
+          - name: mysql-conf
+            mountPath: /etc/mysql/conf.d/mysql.cnf
+            subPath: mysql.cnf
+      volumes:
+        - name: mysql-data
+          hostPath:
+            path: /data/mysql
+            type: DirectoryOrCreate
+        - name: mysql-conf
+          configMap: 
+            name: mysql-conf
+            items:
+            - key: mysql.cnf
+              path: mysql.cnf
+---
+# service
+
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: mysql
+  name: mysql
+  namespace: other
+spec:
+  ports:
+    - port: 3306
+      targetPort: 3306
+  selector:
+    app: mysql
+  type: NodePort
