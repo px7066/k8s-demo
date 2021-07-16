@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+  namespace: other
+  labels:
+    app: mongo
+spec:
+  selector:
+    matchLabels:
+      app: mongo
+  replicas: 1
+  template:
+    metadata:
+      labels: 
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:5.0.0-focal
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: root
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            value: "123456"
+          - name: MONGO_INITDB_DATABASE
+            value: test
+          securityContext:
+            privileged: true
+          ports:
+            - containerPort: 27017
+              name: tcp
+              protocol: TCP
+              hostPort: 27017
+          volumeMounts:
+            - mountPath: /data/db
+              name: mongo-data
+            - mountPath: /docker-entrypoint-initdb.d/init.sh
+              name: init
+              subPath: init.sh
+      volumes:
+        - name: mongo-data
+          hostPath:
+            path: /data/mongo
+        - name: init
+          configMap:
+            name: mongo-conf
+
+
+---
+# service
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: mongo
+  name: mongo
+  namespace: other
+spec:
+  ports:
+    - port: 27017
+      targetPort: 27017
+  selector:
+    app: mongo
+  type: NodePort
+
