@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: other
+  labels:
+    app: jenkins
+spec:
+  selector:
+    matchLabels:
+      app: jenkins
+  replicas: 1
+  template:
+    metadata:
+      labels: 
+        app: jenkins
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: "Always"
+      containers:
+      - name: jenkins
+        image: jenkins:2.60.3
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 50000
+            name: agent-port
+            protocol: TCP
+            hostPort: 50000
+          - containerPort: 8080
+            name: tcp
+            protocol: TCP
+            hostPort: 8080
+        volumeMounts:
+          # - mountPath: /var/jenkins_home/secrets/initialAdminPassword
+          #   name: jenkins-password-init
+          #   subPath: initialAdminPassword
+          - mountPath: /var/jenkins_home
+            name: jenkins-data
+      volumes:
+      # - name: jenkins-password-init
+      #   configMap:
+      #     name: jenkins-conf
+      - name: jenkins-data
+        hostPath:
+          path: /data/jenkins

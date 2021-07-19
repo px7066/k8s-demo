@@ -1,0 +1,55 @@
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: gitlab
+  name: gitlab
+  namespace: other
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitlab
+  template:
+    metadata:
+      labels:
+        app: gitlab
+    spec:
+      containers:
+        - name: gitlab
+          image: gitlab/gitlab-ce:11.0.1-ce.0
+          imagePullPolicy: IfNotPresent
+          # securityContext:
+          #   privileged: true
+          ports:
+          - containerPort: 443
+            protocol: TCP
+            hostPort: 4430
+          - containerPort: 80
+            protocol: TCP
+            hostPort: 800
+          - containerPort: 22
+            hostPort: 220
+            protocol: TCP
+          volumeMounts:
+          - name: gitlab-data
+            mountPath: /var/opt/gitlab
+          - name: gitlab-conf
+            mountPath: /etc/gitlab
+          - name: gitlab-log
+            mountPath: /var/log/gitlab
+      volumes:
+        - name: gitlab-data
+          hostPath:
+            path: /data/gitlab/data
+            type: DirectoryOrCreate
+        - name: gitlab-conf
+          hostPath:
+            path: /data/gitlab/conf
+            type: DirectoryOrCreate
+        - name: gitlab-log
+          hostPath:
+            path: /data/gitlab/log
+            type: DirectoryOrCreate
